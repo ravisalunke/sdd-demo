@@ -1,0 +1,23 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# Environment
+.env
+.env.local
+appsettings.Development.json
+
+# Docker volumes
+postgres_data/
+
+# IDE
+.idea/
+*.DS_Store

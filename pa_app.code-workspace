@@ -1,0 +1,28 @@
+{
+  "folders": [
+    { "name": "PA App (root)", "path": "." },
+    { "name": "Backend — ASP.NET API", "path": "backend/PriorAuth.API" },
+    { "name": "Frontend — React", "path": "frontend" },
+    { "name": "Database — SQL", "path": "database" }
+  ],
+  "settings": {
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2,
+    "typescript.preferences.importModuleSpecifier": "relative",
+    "files.exclude": {
+      "**/bin": true,
+      "**/obj": true,
+      "**/node_modules": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-dotnettools.csharp",
+      "ms-dotnettools.csdevkit",
+      "dbaeumer.vscode-eslint",
+      "bradlc.vscode-tailwindcss",
+      "mtxr.sqltools",
+      "mtxr.sqltools-driver-pg"
+    ]
+  }
+}
