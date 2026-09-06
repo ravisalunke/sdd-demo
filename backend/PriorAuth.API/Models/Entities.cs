@@ -288,3 +288,22 @@ public class AuthorizationDiagnosis
 
     public DiagnosisCode? Diagnosis { get; set; }
 }
+
+[Table("authorization_status_history")]
+public class AuthorizationStatusHistory
+{
+    [Key, Column("id")]
+    public int Id { get; set; }
+
+    [Column("authorization_id")]
+    public int AuthorizationId { get; set; }
+
+    [Column("old_status")]
+    public string? OldStatus { get; set; }
+
+    [Column("new_status")]
+    public string NewStatus { get; set; } = string.Empty;
+
+    [Column("changed_at")]
+    public DateTime ChangedAt { get; set; } = DateTime.UtcNow;
+}

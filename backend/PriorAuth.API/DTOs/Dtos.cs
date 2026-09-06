@@ -110,3 +110,10 @@ public record ProcedureSummary(
     string Description,
     int Quantity
 );
+
+public record AuthorizationStatusHistoryDto(
+    int Id,
+    string? OldStatus,
+    string NewStatus,
+    DateTime ChangedAt
+);
