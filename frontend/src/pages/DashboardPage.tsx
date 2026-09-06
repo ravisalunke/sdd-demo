@@ -9,12 +9,14 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState('')
+  const [page, setPage] = useState(1)
+  const PAGE_SIZE = 20
   const navigate = useNavigate()
 
   const load = async () => {
     setLoading(true); setError(null)
     try {
-      const data = await api.authorizations.getAll(statusFilter || undefined)
+      const data = await api.authorizations.getAll(statusFilter || undefined, page, PAGE_SIZE)
       setAuthorizations(data)
     } catch {
       setError('Failed to load authorizations. Is the API running?')
@@ -23,7 +25,12 @@ export default function DashboardPage() {
     }
   }
 
-  useEffect(() => { load() }, [statusFilter])
+  useEffect(() => {
+    if (page !== 1) { setPage(1); return }
+    load()
+  }, [statusFilter, page])
+
+  const hasMore = authorizations.length === PAGE_SIZE
 
   const statuses = ['', 'PENDING', 'IN_REVIEW', 'APPROVED', 'DENIED', 'CANCELLED']
 
@@ -125,6 +132,28 @@ export default function DashboardPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {!loading && !error && (page > 1 || hasMore) && (
+          <div className="flex justify-between items-center" style={{ padding: '12px 16px' }}>
+            <span className="text-muted text-sm">Page {page}</span>
+            <div className="flex gap-2">
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                ← Prev
+              </button>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => setPage(p => p + 1)}
+                disabled={!hasMore}
+              >
+                Next →
+              </button>
+            </div>
           </div>
         )}
       </div>
