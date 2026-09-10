@@ -97,6 +97,15 @@ public class AuthorizationsController : ControllerBase
         _db.Authorizations.Add(auth);
         await _db.SaveChangesAsync();
 
+        // Seed initial status history entry
+        _db.AuthorizationStatusHistories.Add(new AuthorizationStatusHistory
+        {
+            AuthorizationId = auth.AuthorizationId,
+            OldStatus = null,
+            NewStatus = auth.Status,
+            ChangedAt = auth.CreatedAt
+        });
+
         // Add procedures
         foreach (var proc in request.Procedures)
         {
@@ -145,14 +154,41 @@ public class AuthorizationsController : ControllerBase
         if (auth == null) return NotFound();
 
         var validStatuses = new[] { "PENDING", "APPROVED", "DENIED", "CANCELLED", "IN_REVIEW" };
-        if (!validStatuses.Contains(request.Status.ToUpper()))
+        var newStatus = request.Status.ToUpper();
+        if (!validStatuses.Contains(newStatus))
             return BadRequest($"Invalid status. Must be one of: {string.Join(", ", validStatuses)}");
 
-        auth.Status = request.Status.ToUpper();
-        auth.UpdatedAt = DateTime.UtcNow;
-        await _db.SaveChangesAsync();
+        if (auth.Status != newStatus)
+        {
+            _db.AuthorizationStatusHistories.Add(new AuthorizationStatusHistory
+            {
+                AuthorizationId = auth.AuthorizationId,
+                OldStatus = auth.Status,
+                NewStatus = newStatus,
+                ChangedAt = DateTime.UtcNow
+            });
+
+            auth.Status = newStatus;
+            auth.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+        }
 
         return NoContent();
+    }
+
+    [HttpGet("{id:int}/history")]
+    public async Task<ActionResult<List<AuthorizationStatusHistoryDto>>> GetHistory(int id)
+    {
+        var exists = await _db.Authorizations.AnyAsync(a => a.AuthorizationId == id);
+        if (!exists) return NotFound();
+
+        var history = await _db.AuthorizationStatusHistories
+            .Where(h => h.AuthorizationId == id)
+            .OrderByDescending(h => h.ChangedAt)
+            .Select(h => new AuthorizationStatusHistoryDto(h.Id, h.OldStatus, h.NewStatus, h.ChangedAt))
+            .ToListAsync();
+
+        return Ok(history);
     }
 
     private static AuthorizationDetailDto MapToDetail(Authorization a)
