@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
-import type { AuthorizationDetail } from '../types'
+import type { AuthorizationDetail, AuthorizationStatusHistory } from '../types'
 import { STATUS_COLORS, STATUS_BG } from '../types'
 
 export default function AuthorizationDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [auth, setAuth] = useState<AuthorizationDetail | null>(null)
+  const [history, setHistory] = useState<AuthorizationStatusHistory[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [updatingStatus, setUpdatingStatus] = useState(false)
@@ -18,6 +19,10 @@ export default function AuthorizationDetailPage() {
       .then(setAuth)
       .catch(() => setError('Failed to load authorization'))
       .finally(() => setLoading(false))
+
+    api.authorizations.getHistory(Number(id))
+      .then(setHistory)
+      .catch(() => {/* non-fatal: panel shows "None" */})
   }, [id])
 
   const handleStatusChange = async (newStatus: string) => {
@@ -26,6 +31,7 @@ export default function AuthorizationDetailPage() {
     try {
       await api.authorizations.updateStatus(auth.authorizationId, newStatus)
       setAuth({ ...auth, status: newStatus })
+      setHistory(await api.authorizations.getHistory(auth.authorizationId))
     } catch {
       alert('Failed to update status')
     } finally {
@@ -256,6 +262,51 @@ export default function AuthorizationDetailPage() {
                 <p style={{ fontSize: 13, color: '#374151' }}>{auth.notes}</p>
               </div>
             </>
+          )}
+        </div>
+      </div>
+
+      {/* Status History */}
+      <div className="card mt-4">
+        <div className="card-header"><span className="card-title">Status History</span></div>
+        <div className="card-body">
+          {history.length === 0 ? (
+            <p className="text-muted">No status changes recorded</p>
+          ) : (
+            history.map(h => (
+              <div key={h.id} className="detail-row">
+                <span className="detail-value">
+                  {h.oldStatus ? (
+                    <>
+                      <span
+                        className="badge"
+                        style={{
+                          color: STATUS_COLORS[h.oldStatus] ?? '#374151',
+                          background: STATUS_BG[h.oldStatus] ?? '#f3f4f6',
+                        }}
+                      >
+                        {h.oldStatus}
+                      </span>
+                      {' → '}
+                    </>
+                  ) : (
+                    <span className="text-muted" style={{ marginRight: 4 }}>Created as</span>
+                  )}
+                  <span
+                    className="badge"
+                    style={{
+                      color: STATUS_COLORS[h.newStatus] ?? '#374151',
+                      background: STATUS_BG[h.newStatus] ?? '#f3f4f6',
+                    }}
+                  >
+                    {h.newStatus}
+                  </span>
+                </span>
+                <span className="detail-label text-sm">
+                  {new Date(h.changedAt).toLocaleString()}
+                </span>
+              </div>
+            ))
           )}
         </div>
       </div>

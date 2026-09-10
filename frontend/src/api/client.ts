@@ -1,7 +1,7 @@
 import type {
   HealthPlan, Member, Provider, Site,
   DiagnosisCode, ProcedureCode,
-  AuthorizationSummary, AuthorizationDetail,
+  AuthorizationSummary, AuthorizationDetail, AuthorizationStatusHistory,
   CreateAuthorizationRequest
 } from '../types';
 
@@ -55,9 +55,16 @@ export const api = {
     search: (q: string) => get<ProcedureCode[]>(`/procedurecodes?q=${encodeURIComponent(q)}`),
   },
   authorizations: {
-    getAll: (status?: string) =>
-      get<AuthorizationSummary[]>(`/authorizations${status ? `?status=${status}` : ''}`),
+    getAll: (status?: string, page = 1, pageSize = 20) => {
+      const params = new URLSearchParams();
+      if (status) params.set('status', status);
+      params.set('page', String(page));
+      params.set('pageSize', String(pageSize));
+      return get<AuthorizationSummary[]>(`/authorizations?${params.toString()}`);
+    },
     getById: (id: number) => get<AuthorizationDetail>(`/authorizations/${id}`),
+    getHistory: (id: number) =>
+      get<AuthorizationStatusHistory[]>(`/authorizations/${id}/history`),
     create: (req: CreateAuthorizationRequest) =>
       post<AuthorizationDetail>('/authorizations', req),
     updateStatus: (id: number, status: string) =>
